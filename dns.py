@@ -3,7 +3,7 @@ from scapy.layers.dns import *
 
 
 def dns_server(pkt):
-    if pkt.haslayer(DNSQR):
+    if DNSQR in pkt and pkt[UDP].sport == 1234:
         print(f"DNS Query from {pkt[IP].src} for {pkt[DNSQR].qname.decode()}")
         ip = IP(dst=pkt[IP].src, src=pkt[IP].dst)
         udp = UDP(dport=pkt[UDP].sport, sport=53)
@@ -16,6 +16,9 @@ def dns_server(pkt):
         dns.ar = dns_an
         response = ip / udp / dns
         send(response)
+        print("[+]response dns packet sent")
 
 
-sniff(filter="udp port 53", prn=dns_server)
+if __name__ == '__main__':
+    print("[+]listening for dns request packet")
+    sniff(filter="udp and src port 1234", prn=dns_server)

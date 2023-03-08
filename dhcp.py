@@ -7,35 +7,31 @@ import time
 
 # define dhcp server mac address and IP
 dhcp_server_mac = getmac.get_mac_address()  # get local mac address
-dhcp_server_ip = "192.168.1.1"
+dhcp_server_ip = "10.0.0.2"
 
 # define global variables
 global_client_mac = getmac.get_mac_address()
-global_client_ip = "192.168.1.100"
+global_client_ip = "10.0.0.15"
 
 
 def create_offer_packet():
-    ether = Ether(dst=global_client_mac)
+    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
     ip = IP(src=dhcp_server_ip, dst="255.255.255.255")
     udp = UDP(sport=67, dport=68)
     boot_p = BOOTP(op=2, yiaddr=global_client_ip, siaddr=dhcp_server_ip, chaddr=mac2str(global_client_mac), xid=1234)
     dhcp = DHCP(options=[("message-type", "offer"),
-                         ("subnet_mask", "255.255.255.0"),
-                         ("router", "192.168.1.1"),
+                         ("name_server", '10.0.0.2'),
                          "end"])
     return ether/ip/udp/boot_p/dhcp
 
 
 def create_ack_packet():
-    ethr = Ether(dst=global_client_mac)
-    ip = IP(src='192.168.1.1', dst='255.255.255.255')
+    ethr = Ether(dst="ff:ff:ff:ff:ff:ff")
+    ip = IP(src=dhcp_server_ip, dst='255.255.255.255')
     udp = UDP(sport=67, dport=68)
-    boot_p = BOOTP(op=2, yiaddr=global_client_ip, siaddr='192.168.1.1', chaddr=global_client_mac)
-    dhcp = DHCP(options=[('message-type', 'ack'),
-                         ('server_id', '192.168.1.1'),
-                         ('lease_time', 86400),
-                         ('subnet_mask', '255.255.255.0'),
-                         ('name_server', '192.168.1.2'),  # dns server ip
+    boot_p = BOOTP(op=2, yiaddr=global_client_ip, siaddr=dhcp_server_ip, chaddr=global_client_mac)
+    dhcp = DHCP(options=[("message-type", "ack"),
+                         ("name_server", "10.0.0.2"),  # dns server ip
                          'end'])
     return ethr/ip/udp/boot_p/dhcp
 
@@ -58,6 +54,6 @@ if __name__ == '__main__':
     # create ack packet
     ack_packet = create_ack_packet()
     # send ack packet to client
-    time.sleep(2)
+    # time.sleep(1)
     sendp(ack_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
     print("[+]ack packet sent")
