@@ -5,6 +5,8 @@ from scapy.layers.l2 import *
 import getmac
 import time
 from scapy.layers.dns import *
+import requests
+from urllib.parse import urlparse
 
 
 # define global variables
@@ -12,6 +14,10 @@ global_client_mac = getmac.get_mac_address()
 global_client_ip = ""
 global_dns_server = ""
 global_web_ip = ""
+global_url = ""
+global_domain_name = ""
+global_domain_ip = ""
+global_domain_port = 0
 
 
 # Create DHCP Discover packet
@@ -57,7 +63,7 @@ def handle_ack(packet):
 
 def create_dns_req_packet():
     # Define the DNS query
-    query = DNS(rd=1, qd=DNSQR(qname='example.com'))
+    query = DNS(rd=1, qd=DNSQR(qname=global_domain_name))
     # Define the IP and UDP headers
     ip = IP(dst=global_dns_server, src=global_client_ip)
     udp = UDP(sport=1234, dport=53)
@@ -69,12 +75,12 @@ def create_dns_req_packet():
 def handle_dns_res_packet(packet):
     print("[+]received dns response packet")
     # extract web IP
-    global global_web_ip
-    global_web_ip = packet[DNSRR].rdata
+    global global_domain_ip
+    global_domain_ip = packet[DNSRR].rdata
     print(f"{packet[DNSRR].rrname} ip is: {global_web_ip}")
 
 
-if __name__ == '__main__':
+def handle_dhcp_server():
     # create discover packet
     discover_packet = create_discover_packet()
     # send discover packet
@@ -87,6 +93,9 @@ if __name__ == '__main__':
     print("[+]listening for ack packet")
     ack_packet = sniff(count=1, filter="udp and (port 67 or port 68)", prn=handle_ack)
     print("[+]ack packet received")
+
+
+def handle_dns_server():
     # create dns reqeust
     dns_req = create_dns_req_packet()
     create_dns_req_packet()
@@ -94,5 +103,60 @@ if __name__ == '__main__':
     send(dns_req)
     # sniff dns response packet
     sniff(count=1, filter="udp and dst port 1234", prn=handle_dns_res_packet)
+
+
+def get_url_input():
+    # get url input from user
+    global global_url
+    global_url = input("enter url:")
+
+
+def extract_domain_name():
+    # parse the url
+    parsed_url = urlparse(global_url)
+    # extract the domain name from the parsed url
+    global global_domain_name
+    global_domain_name = parsed_url.hostname
+
+
+def url_with_ip():
+    # swipe the domain name with its corresponding ip
+    return global_url.replace(global_domain_name, global_domain_ip)
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    # ask for an internet configuration from the dhcp server
+    handle_dhcp_server()
+    # # ask for the ip address of the web domain
+    # handle_dns_server()
+
+    # get url input from user
+    get_url_input()
+    # extract domain name from url
+    extract_domain_name()
+    # get domain ip by requesting it from DNS server
+    handle_dns_server()
+    # create new url using corresponding ip of domain name
+    new_url = url_with_ip()
+    print(new_url)
+    # send GET request to domain and get the response
+    response = requests.get(new_url)
+    # check if we received the correct infomarmtion we request
+    if response.status_code == 200:
+        # open a jpg file to store to photo
+        with open('img1_client.jpg', 'wb') as file:
+            file.write(response.content)
+            print("saved image to files(:")
+    else:
+        print("Sorry it didn't work you are a bad programmer")
+
+
+
+
 
 

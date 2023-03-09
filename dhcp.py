@@ -7,11 +7,12 @@ import time
 
 # define dhcp server mac address and IP
 dhcp_server_mac = getmac.get_mac_address()  # get local mac address
-dhcp_server_ip = "10.0.0.2"
+dhcp_server_ip = "10.0.0.1"
 
 # define global variables
 global_client_mac = getmac.get_mac_address()
 global_client_ip = "10.0.0.15"
+global_dns_server = "10.0.0.2"
 
 
 def create_offer_packet():
@@ -20,7 +21,7 @@ def create_offer_packet():
     udp = UDP(sport=67, dport=68)
     boot_p = BOOTP(op=2, yiaddr=global_client_ip, siaddr=dhcp_server_ip, chaddr=mac2str(global_client_mac), xid=1234)
     dhcp = DHCP(options=[("message-type", "offer"),
-                         ("name_server", '10.0.0.2'),
+                         ("name_server", global_dns_server),
                          "end"])
     return ether/ip/udp/boot_p/dhcp
 
@@ -31,7 +32,7 @@ def create_ack_packet():
     udp = UDP(sport=67, dport=68)
     boot_p = BOOTP(op=2, yiaddr=global_client_ip, siaddr=dhcp_server_ip, chaddr=global_client_mac)
     dhcp = DHCP(options=[("message-type", "ack"),
-                         ("name_server", "10.0.0.2"),  # dns server ip
+                         ("name_server", global_dns_server),  # dns server ip
                          'end'])
     return ethr/ip/udp/boot_p/dhcp
 

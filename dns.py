@@ -1,15 +1,16 @@
 from scapy.all import *
 from scapy.layers.dns import *
 
-
-def dns_server(pkt):
-    if DNSQR in pkt and pkt[UDP].sport == 1234:
-        print(f"DNS Query from {pkt[IP].src} for {pkt[DNSQR].qname.decode()}")
-        ip = IP(dst=pkt[IP].src, src=pkt[IP].dst)
-        udp = UDP(dport=pkt[UDP].sport, sport=53)
-        dns = DNS(id=pkt[DNS].id, qd=pkt[DNS].qd)
-        dns_resp = DNSRR(rrname=pkt[DNSQR].qname, rdata="10.0.0.2")
-        dns_an = DNSRR(rrname="example.com", rdata="10.0.0.2")
+domain_ip = "127.0.0.1"
+def dns_server(packet):
+    if DNSQR in packet and packet[UDP].sport == 1234:
+        print(f"DNS Query from {packet[IP].src} for {packet[DNSQR].qname.decode()}")
+        print(packet[IP].src)
+        ip = IP(dst=packet[IP].src, src=packet[IP].dst)
+        udp = UDP(dport=packet[UDP].sport, sport=53)
+        dns = DNS(id=packet[DNS].id, qd=packet[DNS].qd)
+        dns_resp = DNSRR(rrname=packet[DNSQR].qname, rdata=domain_ip)
+        dns_an = DNSRR(rrname="www.example.com", rdata=domain_ip)
         dns.nscount = 1
         dns.ns = dns_resp
         dns.arcount = 1
