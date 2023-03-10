@@ -1,12 +1,13 @@
+from PIL import Image
+
 from scapy.all import *
 from scapy.layers.dhcp import *
-from scapy.layers.inet import *
 from scapy.layers.l2 import *
 import getmac
-import time
 from scapy.layers.dns import *
 import requests
 from urllib.parse import urlparse
+from requests.adapters import HTTPAdapter
 
 
 # define global variables
@@ -96,7 +97,6 @@ def handle_dhcp_server():
 def handle_dns_server():
     # create dns reqeust
     dns_req = create_dns_req_packet()
-    create_dns_req_packet()
     # send dns request packet
     send(dns_req)
     # sniff dns response packet
@@ -121,6 +121,16 @@ def url_with_ip():
     # swipe the domain name with its corresponding ip
     return global_url.replace(global_domain_name, global_domain_ip)
 
+def set_cc_algo():
+    # Create a session object with a custom HTTP adapter
+    session = requests.Session()
+    adapter = HTTPAdapter(pool_connections=1, pool_maxsize=1, max_retries=3)
+
+    # Set the congestion control algorithm to TCP Vegas
+    adapter.init_poolmanager(
+        connection_pool_kw={"socket_options": [("IPPROTO_TCP", socket.TCP_CONGESTION, "vegas")], "maxsize": 1})
+    session.mount("http://", adapter)
+
 def handle_web_server_app():
     # get url input from user
     get_url_input()
@@ -131,14 +141,24 @@ def handle_web_server_app():
     # create new url using corresponding ip of domain name
     new_url = url_with_ip()
     print(new_url)
+    # set congestion control algo
+    # set_cc_algo()
     # send GET request to domain and get the response
     response = requests.get(new_url)
+    print("[+]url requested")
     # check if we received the correct infomarmtion we request
     if response.status_code == 200:
         # open a jpg file to store to photo
+
         with open('img1_client.jpg', 'wb') as file:
             file.write(response.content)
             print("saved image to files(:")
+
+        # Open the image
+        image = Image.open("img1_client.jpg")
+        # Show the image on screen
+        image.show()
+
     else:
         print("Sorry it didn't work you are a bad programmer")
 
