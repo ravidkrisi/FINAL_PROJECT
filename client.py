@@ -18,11 +18,12 @@ global_url = ""
 global_domain_name = ""
 global_domain_ip = ""
 global_domain_port = 0
+global_mac_broadcast = "ff:ff:ff:ff:ff:ff"
 
 
 # Create DHCP Discover packet
 def create_discover_packet():
-    eth = Ether(src=global_client_mac, dst="ff:ff:ff:ff:ff:ff")
+    eth = Ether(dst=global_mac_broadcast)
     ip = IP(src="0.0.0.0", dst="255.255.255.255")
     udp = UDP(sport=68, dport=67)
     boot_p = BOOTP(op=1, chaddr=global_client_mac)
@@ -30,22 +31,17 @@ def create_discover_packet():
     return eth / ip / udp / boot_p / dhcp
 
 
-def handle_offer(offer_packet):
+def handle_offer(packet):
     print("[+]offer packet received")
     # extract offered ip and server ip
-    global global_client_ip
-    global_client_ip = offer_packet[BOOTP].yiaddr
-    for option in offer_packet[DHCP].options:
-        if option[0] == 'name_server':
-            global global_dns_server
-            global_dns_server = option[1]
-            print(global_dns_server)    # create request packet
-    eth = Ether(src=global_client_mac, dst="ff:ff:ff:ff:ff:ff")
-    ip = IP(src="0.0.0.0", dst="255.255.255.255")
+    offered_ip = packet[BOOTP].yiaddr
+    # create request packet
+    eth = Ether(dst=global_mac_broadcast)
+    ip = IP(src="0.0.0.0", dst=packet[IP].src)
     udp = UDP(sport=68, dport=67)
-    boot_p = BOOTP(op=1, chaddr=RandMAC())
+    boot_p = BOOTP(op=1, chaddr=global_client_mac)
     dhcp = DHCP(options=[("message-type", "request"),
-                        ("requested_addr", global_client_ip),
+                        ("requested_addr", offered_ip),
                          "end"])
     request_packet = eth/ip/udp/boot_p/dhcp
     # send request packet
@@ -54,6 +50,8 @@ def handle_offer(offer_packet):
 
 
 def handle_ack(packet):
+    global global_client_ip
+    global_client_ip = packet[BOOTP].yiaddr
     for option in packet[DHCP].options:
         if option[0] == 'name_server':
             global global_dns_server
@@ -123,18 +121,7 @@ def url_with_ip():
     # swipe the domain name with its corresponding ip
     return global_url.replace(global_domain_name, global_domain_ip)
 
-
-
-
-
-
-
-if __name__ == '__main__':
-    # ask for an internet configuration from the dhcp server
-    handle_dhcp_server()
-    # # ask for the ip address of the web domain
-    # handle_dns_server()
-
+def handle_web_server_app():
     # get url input from user
     get_url_input()
     # extract domain name from url
@@ -154,6 +141,14 @@ if __name__ == '__main__':
             print("saved image to files(:")
     else:
         print("Sorry it didn't work you are a bad programmer")
+
+
+if __name__ == '__main__':
+    # ask for an internet configuration from the dhcp server
+    handle_dhcp_server()
+    # start the web application handler
+    handle_web_server_app()
+
 
 
 

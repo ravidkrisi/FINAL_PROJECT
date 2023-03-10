@@ -20,6 +20,10 @@ def dns_server(packet):
         print("[+]response dns packet sent")
 
 
-if __name__ == '__main__':
+def start_dns_server():
     print("[+]listening for dns request packet")
     sniff(filter="udp and src port 1234", prn=dns_server)
+
+
+if __name__ == '__main__':
+    start_dns_server()
