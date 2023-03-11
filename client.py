@@ -14,12 +14,12 @@ from requests.adapters import HTTPAdapter
 global_client_mac = getmac.get_mac_address()
 global_client_ip = ""
 global_dns_server = ""
-global_web_ip = ""
 global_url = ""
 global_domain_name = ""
 global_domain_ip = ""
 global_domain_port = 0
 global_mac_broadcast = "ff:ff:ff:ff:ff:ff"
+global_file_name = ""
 
 
 # Create DHCP Discover packet
@@ -83,7 +83,6 @@ def handle_dns_res_packet(packet):
     # extract web IP
     global global_domain_ip
     global_domain_ip = packet[DNSRR].rdata
-    print(f"{packet[DNSRR].rrname} ip is: {global_web_ip}")
 
 
 def handle_dhcp_server():
@@ -117,6 +116,15 @@ def get_url_input():
     # get url input from user
     global global_url
     global_url = input("enter url:")
+    while not valid_url(global_url):
+        global_url = input("enter valid url:")
+
+
+def valid_url(url):
+    parsed_url = urlparse(url)
+    if parsed_url.scheme and parsed_url.netloc:
+        return True
+    return False
 
 
 def extract_domain_name():
@@ -132,6 +140,12 @@ def url_with_ip():
     return global_url.replace(global_domain_name, global_domain_ip)
 
 
+def extract_file_name():
+    global global_file_name
+    file_name = os.path.basename(global_url)
+    global_file_name = file_name.split(".")[0]+"_client."+file_name.split(".")[1]
+
+
 def handle_web_server_app():
     # get url input from user
     get_url_input()
@@ -141,9 +155,8 @@ def handle_web_server_app():
     handle_dns_server()
     # create new url using corresponding ip of domain name
     new_url = url_with_ip()
-    print(new_url)
-    # set congestion control algo
-    # set_cc_algo()
+    # extract file name of url
+    extract_file_name()
     # send GET request to domain and get the response
     response = requests.get(new_url)
     print("[+]url requested")
@@ -151,12 +164,12 @@ def handle_web_server_app():
     if response.status_code == 200:
         # open a jpg file to store to photo
 
-        with open('img1_client.jpg', 'wb') as file:
+        with open(global_file_name, 'wb') as file:
             file.write(response.content)
-            print("saved image to files(:")
+            print("image saved to files(:")
 
         # Open the image
-        image = Image.open("img1_client.jpg")
+        image = Image.open(global_file_name)
         # Show the image on screen
         image.show()
 

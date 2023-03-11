@@ -30,23 +30,24 @@ def start_proxy():
             print("received GET request")
             # check if is it request for img1
             filename = request.split()[1][1:]
-            if filename == 'img1.jpg':
-                # make a request from server for the image
-                new_url = f'http://{server_ip}:{server_port}/{filename}'
-                response = requests.get(new_url)
-                # check if we received the correct response
-                if response.status_code == 200:
-                    # create a response to send to the client
-                    reply = b'HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n' + response.content
-                    client_sock.sendall(reply)
-                    print("response sent successfully.")
-                else:
-                    print("didnt get the image successfully")
-                client_sock.close()
-                break
+            # make a request from server for the image
+            new_url = f'http://{server_ip}:{server_port}/{filename}'
+            response = requests.get(new_url)
+            # check if we received the correct response
+            if response.status_code == 200:
+                # create a response to send to the client
+                reply = b'HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n' + response.content
+                client_sock.sendall(reply)
+                print("response sent successfully.")
             else:
-                print("received other type of request")
+                print("didnt get the image successfully")
+            # close socket
+            client_sock.close()
+            print("[+]client_socket closed")
+            break
+    # close socket
     proxy_sock.close()
+    print("[+]proxy_sock closed")
 
 
 if __name__ == '__main__':

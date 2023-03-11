@@ -27,19 +27,19 @@ def start_server():
             print("received GET request")
             # check if the client requested the img1
             filename = request.split()[1][1:]
-            if filename == 'img1.jpg':
-                # open the requested image and send it to the client as http response
-                with open('img1.jpg', 'rb') as file:
-                    img_data = file.read()
-                    response = b'HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n' + img_data
-                    client_sock.sendall(response)
-                    print("response sent successfully.")
-                    client_sock.close()
-                    break
-            else:
-                print("received other type of request")
+            # open the requested image and send it to the client as http response
+            with open(filename, 'rb') as file:
+                img_data = file.read()
+                response = b'HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\n\r\n' + img_data
+                client_sock.sendall(response)
+                print("response sent successfully.")
+                # close socket
+                client_sock.close()
+                print("[+]client_sock closed")
+                break
+    # close socket
     server_sock.close()
-
+    print("[+]server_sock closed")
 
 if __name__ == '__main__':
     start_server()
