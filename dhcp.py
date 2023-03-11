@@ -51,6 +51,7 @@ def handle_request_packet(packet):
                          'end'])
     ack_packet = ethr/ip/udp/boot_p/dhcp
     # send ack packet to client
+    time.sleep(1)
     sendp(ack_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
     print("[+]ack packet sent")
 

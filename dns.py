@@ -24,7 +24,7 @@ def dns_server(packet):
             dns.ar = dns_an
             response = ip / udp / dns
             send(response)
-            print("[+]response dns packet sent")
+            print("[+]dns response packet sent")
         else:
             print("received another packet")
 

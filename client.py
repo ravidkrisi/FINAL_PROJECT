@@ -51,13 +51,20 @@ def handle_offer(packet):
 
 
 def handle_ack(packet):
-    global global_client_ip
-    global_client_ip = packet[BOOTP].yiaddr
-    for option in packet[DHCP].options:
-        if option[0] == 'name_server':
-            global global_dns_server
-            global_dns_server = option[1]
-            print(global_dns_server)
+    # check if its an ack packet
+    if DHCP in packet and packet[DHCP].options[0][1] == 5:
+        # store the offered client's IP
+        global global_client_ip
+        global_client_ip = packet[BOOTP].yiaddr
+        print(f"client's IP: {global_client_ip}")
+        # store the DNS server's IP
+        for option in packet[DHCP].options:
+            if option[0] == 'name_server':
+                global global_dns_server
+                global_dns_server = option[1]
+                print(f"dns server IP: {global_dns_server}")
+                # raise a random exception to mark we received the right packet
+                raise KeyboardInterrupt
 
 
 def create_dns_req_packet():
@@ -65,7 +72,7 @@ def create_dns_req_packet():
     query = DNS(rd=1, qd=DNSQR(qname=global_domain_name))
     # Define the IP and UDP headers
     ip = IP(dst=global_dns_server, src=global_client_ip)
-    udp = UDP(sport=1234, dport=53)
+    udp = UDP(sport=20331, dport=53)
     # Construct the packet
     packet = ip/udp/query
     return packet
@@ -88,10 +95,13 @@ def handle_dhcp_server():
     # sniff offer packet
     print("[+]listening for offer packet")
     sniff(count=1, filter="udp and (port 67 or port 68)", prn=handle_offer)
-    # sniff ack packet
-    print("[+]listening for ack packet")
-    ack_packet = sniff(count=1, filter="udp and (port 67 or port 68)", prn=handle_ack)
-    print("[+]ack packet received")
+    # sniff ack packet and filter out nack packet sent by the real dhcp server
+    try:
+        print("[+]listening for ack packet")
+        ack_packet = sniff(filter="udp and (port 67 or port 68)", prn=handle_ack)
+    # wait for exception when the client receive the ack packet that was expected
+    except KeyboardInterrupt:
+        print("[+]ack packet received")
 
 
 def handle_dns_server():
@@ -100,7 +110,7 @@ def handle_dns_server():
     # send dns request packet
     send(dns_req)
     # sniff dns response packet
-    sniff(count=1, filter="udp and dst port 1234", prn=handle_dns_res_packet)
+    sniff(count=1, filter="udp and dst port 20331", prn=handle_dns_res_packet)
 
 
 def get_url_input():
@@ -121,15 +131,6 @@ def url_with_ip():
     # swipe the domain name with its corresponding ip
     return global_url.replace(global_domain_name, global_domain_ip)
 
-def set_cc_algo():
-    # Create a session object with a custom HTTP adapter
-    session = requests.Session()
-    adapter = HTTPAdapter(pool_connections=1, pool_maxsize=1, max_retries=3)
-
-    # Set the congestion control algorithm to TCP Vegas
-    adapter.init_poolmanager(
-        connection_pool_kw={"socket_options": [("IPPROTO_TCP", socket.TCP_CONGESTION, "vegas")], "maxsize": 1})
-    session.mount("http://", adapter)
 
 def handle_web_server_app():
     # get url input from user

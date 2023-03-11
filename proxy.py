@@ -9,17 +9,17 @@ server_port = 80
 
 def start_proxy():
     # create server socket
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    proxy_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # bind the socket to server host and port
-    server_sock.bind((proxy_ip, proxy_port))
+    proxy_sock.bind((proxy_ip, proxy_port))
     print("[+]server socket created")
     # start listening for new connection only one client at a time
-    server_sock.listen(1)
+    proxy_sock.listen(1)
     print("[+]listening for connection")
 
     while True:
         # accept new connection
-        client_sock, client_add = server_sock.accept()
+        client_sock, client_add = proxy_sock.accept()
         print(f'connection made with :{client_add}')
 
         # receive the client's packet and decode it to string
@@ -46,7 +46,7 @@ def start_proxy():
                 break
             else:
                 print("received other type of request")
-    server_sock.close()
+    proxy_sock.close()
 
 
 if __name__ == '__main__':
