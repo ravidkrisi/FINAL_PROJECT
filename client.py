@@ -53,6 +53,7 @@ def handle_offer(packet):
                          "end"])
     request_packet = eth/ip/udp/boot_p/dhcp
     # send request packet
+    time.sleep(1)
     sendp(request_packet, iface=global_interface)
     print("[+]request packet sent")
 
