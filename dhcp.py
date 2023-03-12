@@ -14,6 +14,7 @@ global_client_mac = getmac.get_mac_address()
 global_client_ip = ""
 global_dns_server = "10.0.0.2"
 global_mac_broadcast = "ff:ff:ff:ff:ff:ff"
+global_interface = ""
 
 
 def generate_ip():
@@ -35,7 +36,7 @@ def handle_discover_packet(packet):
     offer_packet = ether/ip/udp/boot_p/dhcp
     # send offer packet to client
     time.sleep(2)
-    sendp(offer_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
+    sendp(offer_packet, iface=global_interface)
     print("[+]offer packet sent")
 
 
@@ -52,11 +53,19 @@ def handle_request_packet(packet):
     ack_packet = ethr/ip/udp/boot_p/dhcp
     # send ack packet to client
     time.sleep(1)
-    sendp(ack_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
+    sendp(ack_packet, iface=global_interface)
     print("[+]ack packet sent")
 
 
+def get_interface():
+    # get interface from user
+    global global_interface
+    global_interface = input("enter inteface to use:")
+
+
 def start_dhcp_server():
+    # get inteface from user
+    get_interface()
     # sniff the Discover packet
     print("[+]listening for discover packet")
     sniff(count=1, filter="udp and (port 67 or port 68)", prn=handle_discover_packet)

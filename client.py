@@ -20,6 +20,13 @@ global_domain_ip = ""
 global_domain_port = 0
 global_mac_broadcast = "ff:ff:ff:ff:ff:ff"
 global_file_name = ""
+global_interface = ""
+
+
+def get_interface():
+    # get interface from user
+    global global_interface
+    global_interface = input("enter inteface to use:")
 
 
 # Create DHCP Discover packet
@@ -46,7 +53,7 @@ def handle_offer(packet):
                          "end"])
     request_packet = eth/ip/udp/boot_p/dhcp
     # send request packet
-    sendp(request_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
+    sendp(request_packet, iface=global_interface)
     print("[+]request packet sent")
 
 
@@ -86,10 +93,12 @@ def handle_dns_res_packet(packet):
 
 
 def handle_dhcp_server():
+    # get interface from user
+    get_interface()
     # create discover packet
     discover_packet = create_discover_packet()
     # send discover packet
-    sendp(discover_packet, iface="Intel(R) Wi-Fi 6 AX201 160MHz")
+    sendp(discover_packet, iface=global_interface)
     print("[+]discover packet sent")
     # sniff offer packet
     print("[+]listening for offer packet")

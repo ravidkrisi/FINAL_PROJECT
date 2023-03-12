@@ -1,17 +1,17 @@
 import socket
 import requests
 
-proxy_ip = "127.0.0.1"
-proxy_port = 80
-server_ip = "127.0.0.2"
-server_port = 80
+web_server_ip = "127.0.0.2"
+web_server_port = 80
+storage_server_ip = "127.0.0.3"
+storage_server_port = 80
 
 
 def start_proxy():
     # create server socket
     proxy_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # bind the socket to server host and port
-    proxy_sock.bind((proxy_ip, proxy_port))
+    proxy_sock.bind((web_server_ip, web_server_port))
     print("[+]server socket created")
     # start listening for new connection only one client at a time
     proxy_sock.listen(1)
@@ -25,13 +25,13 @@ def start_proxy():
         # receive the client's packet and decode it to string
         request = client_sock.recv(1024).decode('utf-8')
 
-        # check if its a GET http request
+        # check if it's a GET http request
         if 'GET' in request:
             print("received GET request")
             # check if is it request for img1
             filename = request.split()[1][1:]
             # make a request from server for the image
-            new_url = f'http://{server_ip}:{server_port}/{filename}'
+            new_url = f'http://{storage_server_ip}:{storage_server_port}/{filename}'
             response = requests.get(new_url)
             # check if we received the correct response
             if response.status_code == 200:

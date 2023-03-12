@@ -4,7 +4,7 @@ from scapy.layers.l2 import *
 import getmac
 
 
-domain_ip = "127.0.0.1"
+domain_ip = "127.0.0.2"
 global_client_mac = getmac.get_mac_address()
 global_mac_broadcast = "ff:ff:ff:ff:ff:ff"
 

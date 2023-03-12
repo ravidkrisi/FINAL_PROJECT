@@ -1,14 +1,14 @@
 import socket
 
-server_ip = "127.0.0.2"
-server_port = 80
+storage_server_ip = "127.0.0.3"
+storage_server_port = 80
 
 
 def start_server():
     # create server socket
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # bind the socket to server host and port
-    server_sock.bind((server_ip, server_port))
+    server_sock.bind((storage_server_ip, storage_server_port))
     print("[+]server socket created")
     # start listening for new connection only one client at a time
     server_sock.listen(1)
